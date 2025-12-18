@@ -7,24 +7,6 @@
     <title>익스트림 · 동봉 추천 (Scoring Edition)</title>
 
     <style>
-        .snowflake {
-            position: fixed;
-            top: -20px;
-            color: #fff;
-            user-select: none;
-            z-index: 9999;
-            pointer-events: none;
-            animation-name: fall;
-            animation-timing-function: linear;
-            animation-iteration-count: infinite;
-        }
-
-        @keyframes fall {
-            to {
-                transform: translateY(110vh) rotate(360deg);
-            }
-        }
-
         :root {
             --background: #0f0f12;
             /* Slightly cooler dark */
@@ -1018,64 +1000,13 @@
                 }, 2000);
             });
         }
-
-        // --- Snow Effect ---
-        function createSnowflake() {
-            const snowflake = document.createElement('div');
-            snowflake.classList.add('snowflake');
-            snowflake.textContent = ['❄', '❅', '❆'][Math.floor(Math.random() * 3)];
-            snowflake.style.left = Math.random() * 100 + 'vw';
-            snowflake.style.fontSize = Math.random() * 12 + 10 + 'px';
-            snowflake.style.opacity = Math.random() * 0.7 + 0.3;
-
-            const duration = Math.random() * 5 + 5;
-            snowflake.style.animationDuration = duration + 's';
-            snowflake.style.animationDelay = Math.random() * 5 + 's';
-
-            document.body.appendChild(snowflake);
-
-            setTimeout(() => {
-                snowflake.remove();
-            }, (duration + 5) * 1000);
-        }
-
-        // Initial batch
-        for (let i = 0; i < 30; i++) {
-            createSnowflake();
-        }
-
-        // Continuous generation
-        setInterval(createSnowflake, 200);
     </script>
 
     <style>
         body {
             overflow-x: hidden;
-            /* Prevent horizontal scrollbar from snowflakes */
-        }
-
-        .snowflake {
-            position: fixed;
-            top: -20px;
-            /* Start above the viewport */
-            color: #fff;
-            z-index: 9999;
-            pointer-events: none;
-            /* Allow clicking through snowflakes */
-            animation: fall linear infinite;
-        }
-
-        @keyframes fall {
-            0% {
-                transform: translateY(0) rotate(0deg);
-            }
-
-            100% {
-                transform: translateY(100vh) rotate(360deg);
-            }
         }
     </style>
 </body>
 
 </html>
-```
