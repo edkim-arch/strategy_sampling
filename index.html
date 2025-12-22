@@ -4,1009 +4,897 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>익스트림 · 동봉 추천 (Scoring Edition)</title>
-
+    <title>EXTREME SAMPLING TF · 샘플링 제품 추천 데이터</title>
+    <!-- Modern Sans-serif Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Outfit:wght@500;700;900&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
         :root {
-            --background: #0f0f12;
-            /* Slightly cooler dark */
-            --foreground: #ededed;
-            --primary: #D32F2F;
-            /* Christmas Red */
-            --secondary: #2E7D32;
-            /* Christmas Green */
-            --accent: #FFD700;
-            /* Gold */
-            --surface: #1e1e1e;
-            --surface-hover: #252525;
-            --border: #333;
+            /* Kakao Brand Colors */
+            --kakao-yellow: #FEE800;
+            --kakao-brown: #3C1E1E;
+            --kakao-yellow-light: #FFFAE0;
+
+            /* Override Theme */
+            --toss-blue: var(--kakao-yellow);
+            --toss-blue-light: var(--kakao-yellow-light);
+            --bg-light: #F2F4F6;
+            --surface: #FFFFFF;
+            --text-main: #191F28;
+            --text-muted: #4E5968;
+            --text-sub: #8B95A1;
+            --border: #E5E8EB;
+            --primary: var(--kakao-yellow);
+            --danger: #F04452;
+            --success: #31C164;
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            --font-head: 'Outfit', 'Inter', -apple-system, sans-serif;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
         }
 
         body {
-            background: radial-gradient(circle at 50% 0%, #1a0b0b 0%, var(--background) 70%);
-            /* Subtle red glow at top */
-            color: var(--foreground);
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, sans-serif;
             margin: 0;
             padding: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
+            line-height: 1.6;
         }
 
-
-        .main-container {
-            width: 100%;
-            max-width: 1200px;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 40px;
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 60px 24px;
         }
 
+        /* Header Layout (Updated with Timestamp) */
         header {
-            text-align: center;
-            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 40px;
         }
 
-        .brand {
+        .header-title-group {
+            text-align: left;
+        }
+
+        .brand-badge {
+            color: var(--kakao-brown);
+            background: var(--kakao-yellow);
+            padding: 2px 8px;
+            border-radius: 4px;
             font-size: 14px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            color: var(--accent);
-            /* Gold brand */
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            opacity: 0.9;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            display: inline-block;
         }
 
         h1 {
-            font-size: 32px;
+            font-family: var(--font-head);
+            font-size: 36px;
             font-weight: 800;
-            margin: 0 0 16px 0;
-            background: linear-gradient(90deg, #fff, #ffaeae);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 20px rgba(211, 47, 47, 0.5);
+            margin: 0;
+            color: var(--kakao-brown);
+            /* 제목에 카카오 브라운 적용하여 가독성 확보 */
+            letter-spacing: -1px;
+            text-shadow: 1px 1px 0px var(--kakao-yellow);
+            /* 노란색 포인트 */
         }
-
 
         .subtitle {
-            font-size: 16px;
-            color: #888;
-            margin: 0;
-            line-height: 1.5;
+            color: var(--text-muted);
+            font-size: 18px;
+            margin-top: 8px;
+            font-weight: 500;
         }
 
-        /* Search Input */
-        .search-section {
+        /* Storage Timestamp Display */
+        .storage-status {
+            text-align: right;
+            font-size: 11px;
+            color: var(--text-muted);
+            background: #FFFFFF;
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            box-shadow: var(--card-shadow);
+            font-weight: 600;
+        }
+
+        .storage-info-wrapper {
             display: flex;
-            flex-direction: column;
             align-items: center;
             gap: 12px;
-            z-index: 100;
+        }
+
+        /* Compact Upload & Control Row */
+        .control-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 12px;
+            margin-bottom: 32px;
+            align-items: stretch;
+        }
+
+        #controlPanel {
+            display: grid;
+        }
+
+        .upload-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
             position: relative;
         }
 
-        .search-wrapper {
+        .upload-btn:hover {
+            border-color: var(--kakao-yellow);
+            box-shadow: var(--card-shadow);
+        }
+
+        .upload-btn.loaded {
+            background: var(--kakao-yellow-light);
+            border-color: var(--kakao-yellow);
+        }
+
+        .upload-btn input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-btn .icon {
+            font-size: 20px;
+        }
+
+        .upload-btn .label-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .upload-btn .label {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--text-main);
+        }
+
+        .upload-btn .file-name {
+            font-size: 11px;
+            color: var(--text-sub);
+        }
+
+        /* Persistence Buttons */
+        .storage-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn-storage {
+            border: none;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-save {
+            background: var(--kakao-yellow);
+            color: var(--kakao-brown);
+        }
+
+        .btn-save:hover {
+            background: #EED600;
+        }
+
+        .btn-delete {
+            background: white;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+
+        .btn-delete:hover {
+            background: #FFF0F0;
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        #analysisArea {
+            display: none;
+        }
+
+        .section-box {
+            background: var(--surface);
+            border-radius: 24px;
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .section-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .section-title {
+            font-family: var(--font-head);
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .search-box-wrapper {
             position: relative;
-            width: 100%;
-            max-width: 500px;
+            flex-grow: 1;
+            max-width: 300px;
         }
 
         .search-input {
             width: 100%;
-            padding: 16px;
-            font-size: 16px;
+            padding: 10px 16px;
+            padding-left: 36px;
+            border-radius: 10px;
             border: 1px solid var(--border);
-            background-color: #1a1a1a;
-            color: #fff;
-            border-radius: 8px;
+            background: #F9FAFB;
+            font-size: 14px;
             outline: none;
             transition: all 0.2s;
         }
 
         .search-input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(247, 37, 133, 0.2);
+            border-color: var(--kakao-yellow);
+            background: #FFFFFF;
+            box-shadow: 0 0 0 3px rgba(254, 232, 0, 0.2);
         }
 
-        .dropdown {
+        .search-icon {
             position: absolute;
-            top: 100%;
-            left: 0;
-            width: 100%;
-            background-color: #222;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            margin-top: 4px;
-            max-height: 240px;
-            overflow-y: auto;
-            z-index: 100;
-            list-style: none;
-            padding: 0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-            display: none;
-        }
-
-        .dropdown.show {
-            display: block;
-        }
-
-        .dropdown-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            color: #ddd;
-            border-bottom: 1px solid #333;
-        }
-
-        .dropdown-item:last-child {
-            border-bottom: none;
-        }
-
-        .dropdown-item:hover {
-            background-color: #333;
-            color: #fff;
-        }
-
-        /* Results Section */
-        .results-section {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.5s ease, transform 0.5s ease;
-        }
-
-        .results-section.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .anchor-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 16px;
-        }
-
-        .anchor-info h2 {
-            font-size: 20px;
-            margin: 0;
-            font-weight: 500;
-        }
-
-        .highlight {
-            color: var(--secondary);
-            font-weight: 700;
-        }
-
-        .score-badge {
-            background-color: #222;
-            border: 1px solid #444;
-            border-radius: 20px;
-            padding: 6px 16px;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-sub);
             font-size: 14px;
-            color: #ccc;
         }
 
-        .score-badge strong {
-            color: var(--primary);
-        }
-
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 24px;
-        }
-
-        /* Card Component */
-        .card {
-            background: linear-gradient(145deg, var(--surface), #141414);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
+        .period-tabs {
             display: flex;
-            flex-direction: column;
-            gap: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Top decoration for card (Red line) */
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 30px rgba(211, 47, 47, 0.15);
-            /* Red glow */
-            border-color: var(--primary);
-        }
-
-
-        .card-header {
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 12px;
-        }
-
-        .rank-badge {
-            background-color: var(--primary);
-            /* Red badge */
-            color: #fff;
-            font-size: 12px;
-            font-weight: bold;
-            padding: 4px 8px;
-            border-radius: 4px;
-            display: inline-block;
-            margin-bottom: 8px;
-        }
-
-
-        .product-name {
-            font-size: 20px;
-            font-weight: 700;
-            margin: 0;
-            color: #fff;
-        }
-
-        .category-name {
-            font-size: 14px;
-            color: #888;
-            margin-top: 4px;
-            display: block;
-        }
-
-        .score-bar-bg {
-            background-color: #333;
-            height: 8px;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 8px;
-        }
-
-        .score-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--secondary), var(--primary));
-            width: 0%;
-            transition: width 1s ease-out;
-        }
-
-        .score-value {
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--accent);
-            float: right;
-        }
-
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            background: #111;
-            padding: 12px;
-            border-radius: 8px;
-        }
-
-        .stat-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .stat-item label {
-            font-size: 10px;
-            color: #777;
-            margin-bottom: 4px;
-        }
-
-        .stat-item span {
-            font-size: 14px;
-            font-weight: bold;
-            color: #ddd;
-        }
-
-        .message-box {
-            background-color: #222;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 12px;
-        }
-
-        .message-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .message-header span {
-            font-size: 12px;
-            font-weight: bold;
-            color: #bbb;
-        }
-
-        .copy-btn {
-            background: none;
-            border: 1px solid #555;
-            color: #ddd;
-            font-size: 11px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .copy-btn:hover {
-            background-color: #333;
-            border-color: #777;
-        }
-
-        .message-text {
-            font-size: 13px;
-            line-height: 1.6;
-            color: #ccc;
-            white-space: pre-wrap;
-            margin: 0 0 12px 0;
-            font-family: inherit;
-        }
-
-        .coupon {
-            font-size: 12px;
-            color: var(--primary);
-            font-weight: bold;
-            text-align: center;
-            border-top: 1px dashed #444;
-            padding-top: 8px;
-        }
-
-        .no-data {
-            text-align: center;
-            color: #666;
-            font-size: 16px;
-            padding: 40px;
-            width: 100%;
-        }
-
-        /* Repurchase Summary Section */
-        .repurchase-summary-section {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .summary-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .summary-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--accent);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .tab-group {
-            display: flex;
-            background: #111;
+            background: #F2F4F6;
             padding: 4px;
-            border-radius: 8px;
-            border: 1px solid #333;
+            border-radius: 12px;
+            gap: 4px;
         }
 
         .tab-btn {
-            background: none;
             border: none;
-            color: #888;
-            padding: 8px 16px;
-            font-size: 14px;
-            font-weight: 600;
+            background: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
             cursor: pointer;
-            border-radius: 6px;
             transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
         }
 
         .tab-btn.active {
-            background: var(--surface-hover);
-            color: #fff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            background: #FFFFFF;
+            color: var(--kakao-brown);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--kakao-yellow);
         }
 
-        .summary-list {
+        .product-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 12px;
+            gap: 10px;
         }
 
-        .summary-item {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 10px;
-            padding: 12px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.2s;
+        .product-item {
+            background: #F9FAFB;
+            border: 1px solid var(--border);
+            padding: 18px;
+            border-radius: 14px;
             cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
-        .summary-item:hover {
-            transform: scale(1.02);
-            border-color: var(--secondary);
-            background: rgba(46, 125, 50, 0.1);
+        .product-item:hover {
+            background: var(--surface);
+            border-color: var(--kakao-yellow);
+            transform: translateY(-2px);
         }
 
-        .summary-item.selected {
-            border-color: var(--accent);
-            background: rgba(255, 215, 0, 0.1);
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+        .product-item .rank {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--kakao-brown);
+            background: var(--kakao-yellow);
+            padding: 1px 4px;
+            border-radius: 3px;
+            width: fit-content;
         }
 
-        .item-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: #eee;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-right: 8px;
-        }
-
-        .item-value {
-            font-size: 15px;
-            font-weight: 800;
-            color: var(--secondary);
-        }
-
-        /* Strategy Analysis Section */
-        .strategy-section {
-            display: none;
-            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
-            border: 2px solid var(--accent);
-            border-radius: 16px;
-            padding: 24px;
-            margin-top: 20px;
-            animation: slideDown 0.4s ease-out;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .strategy-section.visible {
-            display: block;
-        }
-
-        .strategy-header {
-            margin-bottom: 20px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 12px;
-        }
-
-        .strategy-header h2 {
-            font-size: 22px;
-            color: var(--accent);
-            margin: 0;
-        }
-
-        .strategy-header p {
+        .product-item .name {
             font-size: 14px;
-            color: #888;
-            margin: 4px 0 0 0;
+            font-weight: 600;
+            color: var(--text-main);
+            word-break: keep-all;
         }
 
-        .strategy-grid {
+        .product-item .rate {
+            font-size: 13px;
+            color: var(--danger);
+            font-weight: 700;
+            letter-spacing: -0.2px;
+        }
+
+        .focus-banner {
+            display: none;
+            background: var(--kakao-yellow);
+            /* Focus Banner 카카오 옐로우 */
+            border-radius: 20px;
+            padding: 24px 32px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            color: var(--kakao-brown);
+        }
+
+        .focus-info h2 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--kakao-brown);
+        }
+
+        .btn-reset {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-reset:hover {
+            background: #F9FAFB;
+            color: var(--text-main);
+        }
+
+        .anchor-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: 1fr;
             gap: 20px;
         }
 
-        .strategy-card {
-            background: #222;
-            border: 1px solid #444;
-            border-radius: 12px;
-            padding: 16px;
-            position: relative;
+        .anchor-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 32px;
+            transition: all 0.2s;
         }
 
-        .strategy-rank {
-            position: absolute;
-            top: -10px;
-            left: 10px;
-            background: var(--accent);
-            color: #000;
-            font-weight: 900;
-            padding: 2px 10px;
+        .anchor-card:hover {
+            border-color: var(--kakao-yellow);
+        }
+
+        .anchor-prefix {
+            border-right: 1px solid var(--border);
+            padding-right: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .rank-tag {
+            color: var(--kakao-brown);
+            background: var(--kakao-yellow);
+            width: fit-content;
+            padding: 2px 6px;
             border-radius: 4px;
+            font-weight: 800;
             font-size: 12px;
+            margin-bottom: 8px;
         }
 
-        .strategy-product-name {
-            font-size: 18px;
-            font-weight: 700;
-            margin: 8px 0;
-            color: #fff;
-        }
-
-        .strategy-score-label {
-            font-size: 12px;
-            color: #aaa;
-        }
-
-        .strategy-score-val {
+        .anchor-name {
             font-size: 20px;
             font-weight: 800;
-            color: var(--secondary);
-            margin-left: 8px;
+            margin: 0 0 16px 0;
+            line-height: 1.4;
         }
 
-        .strategy-reason {
-            margin-top: 12px;
+        .metrics-inline {
+            display: flex;
+            gap: 16px;
+        }
+
+        .m-item {
+            text-align: left;
+        }
+
+        .m-item label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-sub);
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .m-item span {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .report-box {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .report-title {
+            font-weight: 700;
             font-size: 13px;
-            color: #ccc;
-            background: #111;
-            padding: 10px;
-            border-radius: 6px;
-            line-height: 1.5;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .report-text {
+            font-size: 15px;
+            color: var(--text-main);
+            line-height: 1.7;
+            background: #F9FAFB;
+            padding: 20px;
+            border-radius: 16px;
+            word-break: keep-all;
+        }
+
+        .report-text b {
+            color: var(--kakao-brown);
+            background: rgba(254, 232, 0, 0.4);
+            padding: 0 2px;
+        }
+
+        .report-text.error {
+            color: var(--danger);
+            background: #FFF0F0;
+            border: 1px solid rgba(240, 68, 82, 0.1);
+        }
+
+        @media (max-width: 900px) {
+            .anchor-card {
+                grid-template-columns: 1fr;
+            }
+
+            .anchor-prefix {
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding-right: 0;
+                padding-bottom: 20px;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box-wrapper {
+                max-width: none;
+            }
+
+            .control-panel {
+                grid-template-columns: 1fr;
+            }
+
+            .storage-controls {
+                flex-direction: row;
+            }
+
+            .btn-storage {
+                flex: 1;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
         }
     </style>
 </head>
 
 <body>
 
-    <div class="main-container">
+    <div class="container">
         <header>
-            <div class="brand">🚀 EXTREME SCORING EDITION 🚀</div>
-            <h1>익스트림 샘플링 TF</h1>
-            <p class="subtitle">아르기닌, 블랙마카, 활력 부스터 제외 / 데이터 정밀 점수 제안</p>
+            <div class="header-title-group">
+                <span class="brand-badge">EXTREME SAMPLING TF</span>
+                <h1>샘플링 제품 추천 데이터</h1>
+                <p class="subtitle">실제 구매 로그 기반의 전략적 동봉 앵커 분석</p>
+            </div>
+            <div class="storage-info-wrapper">
+                <div class="storage-status" id="storageStatus">데이터 상태: 업로드 필요</div>
+                <button id="headerDeleteBtn" class="btn-storage btn-delete" style="display:none;"
+                    onclick="clearStorage()">🗑️ 데이터 삭제</button>
+            </div>
         </header>
 
-
-
-        <section class="repurchase-summary-section">
-            <div class="summary-header">
-                <h2 class="summary-title">📈 재구매율 순위 요약</h2>
-                <div class="tab-group">
-                    <button class="tab-btn active" onclick="switchSummaryTab(60)">60일 재구매율</button>
-                    <button class="tab-btn" onclick="switchSummaryTab(90)">90일 재구매율</button>
+        <div class="control-panel" id="controlPanel">
+            <label class="upload-btn" id="rrBox">
+                <span class="icon">📈</span>
+                <div class="label-group">
+                    <span class="label">재구매율(RR) 업로드</span>
+                    <span class="file-name">csv 파일 선택</span>
                 </div>
+                <input type="file" id="rrFile" accept=".csv">
+            </label>
+            <label class="upload-btn" id="arBox">
+                <span class="icon">🎯</span>
+                <div class="label-group">
+                    <span class="label">연관구매(AR) 업로드</span>
+                    <span class="file-name">csv 파일 선택</span>
+                </div>
+                <input type="file" id="arFile" accept=".csv">
+            </label>
+            <div class="storage-controls">
+                <button class="btn-storage btn-save" onclick="saveToStorage()">
+                    💾 데이터 저장
+                </button>
             </div>
-            <div id="summaryList" class="summary-list">
-                <!-- Summary items will be injected here -->
-            </div>
-        </section>
+        </div>
 
-        <!-- Strategy Analysis View -->
-        <section id="strategySection" class="strategy-section">
-            <div class="strategy-header">
-                <h2>🎯 최적 샘플링 동봉 전략 분석</h2>
-                <p id="strategySubtitle">전략 가이드</p>
-            </div>
-            <div id="strategyGrid" class="strategy-grid">
-                <!-- Strategy cards will be injected here -->
-            </div>
-        </section>
+        <div id="analysisArea">
+            <div id="listSection" class="section-box">
+                <div class="section-header">
+                    <div class="section-title-group">
+                        <h3 class="section-title">재구매율 TOP 50 단품</h3>
+                        <div style="font-size: 12px; color: var(--text-sub); font-weight: 500;" id="currentPeriodLabel">
+                            기준: 90일 재구매율</div>
+                    </div>
 
-        <section class="search-section">
-            <h3 style="font-size: 16px; color: #888; margin: 0;">🔍 앵커 제품 선택</h3>
-            <div class="search-wrapper">
-                <input type="text" id="searchInput" class="search-input" placeholder="제품명을 검색하세요 (예: 익스트림 아르기닌)"
-                    autocomplete="off">
-                <ul id="searchDropdown" class="dropdown"></ul>
-            </div>
-        </section>
+                    <div class="search-box-wrapper">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="productSearch" class="search-input" placeholder="제품명을 검색하세요..."
+                            oninput="renderTopProducts()">
+                    </div>
 
-        <div id="resultsContainer" class="results-section">
-            <!-- Results will be injected here -->
+                    <div class="period-tabs">
+                        <button class="tab-btn" onclick="switchPeriod('30일')">30일</button>
+                        <button class="tab-btn" onclick="switchPeriod('60일')">60일</button>
+                        <button class="tab-btn active" onclick="switchPeriod('90일')">90일</button>
+                        <button class="tab-btn" onclick="switchPeriod('180일')">180일</button>
+                    </div>
+                </div>
+                <div id="productGrid" class="product-grid"></div>
+            </div>
+
+            <div id="focusBanner" class="focus-banner">
+                <div class="focus-info">
+                    <h2>전략 대상: <span id="targetNameDisplay"></span></h2>
+                </div>
+                <button class="btn-reset" onclick="resetSelection()">다시 선택하기</button>
+            </div>
+
+            <div id="anchorSection" class="section-box" style="display: none;">
+                <div class="section-header">
+                    <h3 class="section-title">최적 선행 구매 제품 (앵커 제품)</h3>
+                </div>
+                <div id="anchorGrid" class="anchor-grid"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        // --- Data Injection ---
-        // Expanded Dummy Data for Demo
-        const rawRR = `구매상품	재구매율_30일	재구매율_60일	재구매율_90일	재구매율_180일
-익스트림 아르기닌	10.5	20.1	25.5	30.2
-익스트림 단백질 슬림 쉐이크	8.2	15.3	18.9	22.1
-익스트림 오메가3	12.1	21.5	28.3	35.4
-익스트림 유산균	15.2	25.6	32.4	40.1
-익스트림 간케어	9.5	18.2	22.5	28.9
-익스트림 관절케어	7.8	14.2	17.6	21.5
-익스트림 활력 부스터	11.3	19.8	24.2	29.7
-익스트림 멀티비타민	14.5	22.1	29.5	36.2
-익스트림 마그네슘	9.2	16.5	20.1	25.4
-익스트림 블랙마카	11.8	20.4	26.1	31.5
-익스트림 콜라겐	13.2	23.5	30.1	38.2
-익스트림 루테인	8.9	15.8	19.4	24.1`;
+        let rawRR = [];
+        let rawAR = [];
+        let currentPeriod = '90일';
+        const EXCLUDES = ["세트", "100원딜", "사은품", "할인관"];
+        const MIN_TX_COUNT = 10;
 
-        const rawAR = `A상품	B상품	두상품 구매 거래수	신뢰도	향상도
-익스트림 아르기닌	익스트림 단백질 슬림 쉐이크	1,250	40.2%	3.50
-익스트림 아르기닌	익스트림 오메가3	890	25.5%	2.10
-익스트림 아르기닌	익스트림 활력 부스터	1,500	38.1%	3.60
-익스트림 아르기닌	익스트림 간케어	450	10.0%	1.50
-익스트림 아르기닌	익스트림 멀티비타민	300	8.5%	1.20
-익스트림 아르기닌	익스트림 블랙마카	1,100	32.5%	3.10
-익스트림 단백질 슬림 쉐이크	익스트림 아르기닌	1,250	45.5%	3.50
-익스트림 단백질 슬림 쉐이크	익스트림 오메가3	600	15.2%	1.20
-익스트림 단백질 슬림 쉐이크	익스트림 마그네슘	400	12.1%	1.80
-익스트림 오메가3	익스트림 루테인	2,100	55.5%	4.20
-익스트림 오메가3	익스트림 유산균	1,800	40.1%	3.10
-익스트림 오메가3	익스트림 관절케어	900	22.3%	2.00
-익스트림 오메가3	익스트림 멀티비타민	1,200	30.2%	2.50
-익스트림 유산균	익스트림 오메가3	1,800	38.5%	3.10
-익스트림 유산균	익스트림 아르기닌	500	12.5%	0.90
-익스트림 유산균	익스트림 콜라겐	950	25.5%	2.20
-익스트림 관절케어	익스트림 오메가3	900	30.5%	2.00
-익스트림 관절케어	익스트림 마그네슘	600	22.1%	2.80
-익스트림 멀티비타민	익스트림 오메가3	1,200	35.5%	2.50
-익스트림 멀티비타민	익스트림 아르기닌	500	15.2%	1.20
-익스트림 멀티비타민	익스트림 유산균	800	28.5%	2.10
-익스트림 멀티비타민	익스트림 마그네슘	1,000	31.2%	2.90
-익스트림 블랙마카	익스트림 아르기닌	1,300	45.2%	3.80
-익스트림 블랙마카	익스트림 활력 부스터	900	30.1%	2.50
-익스트림 블랙마카	익스트림 간케어	600	20.5%	1.90
-익스트림 마그네슘	익스트림 멀티비타민	950	30.5%	2.80
-익스트림 마그네슘	익스트림 오메가3	400	15.2%	1.50
-익스트림 마그네슘	익스트림 관절케어	550	18.5%	2.20
-익스트림 콜라겐	익스트림 유산균	900	32.5%	2.80
-익스트림 콜라겐	익스트림 오메가3	500	18.2%	1.60
-익스트림 콜라겐	익스트림 멀티비타민	450	16.5%	1.40
-익스트림 루테인	익스트림 오메가3	1,900	50.5%	3.90
-익스트림 루테인	익스트림 멀티비타민	600	20.1%	1.80
-익스트림 활력 부스터	익스트림 아르기닌	1,400	42.5%	3.70
-익스트림 활력 부스터	익스트림 블랙마카	850	28.5%	2.40
-익스트림 간케어	익스트림 아르기닌	400	15.5%	1.60
-익스트림 간케어	익스트림 멀티비타민	350	12.5%	1.30`;
-
-        const rawCtg = `구매상품	카테고리
-익스트림 아르기닌	운동/에너지
-익스트림 단백질 슬림 쉐이크	단백질/쉐이크
-익스트림 오메가3	오메가3/루테인
-익스트림 유산균	장건강
-익스트림 간케어	간/대사
-익스트림 관절케어	관절
-익스트림 활력 부스터	아르기닌/활력
-익스트림 루테인	오메가3/루테인
-익스트림 멀티비타민	기초영양
-익스트림 마그네슘	기초영양
-익스트림 블랙마카	운동/에너지
-익스트림 콜라겐	기초영양`;
-
-        // --- Parsing Logic ---
-        function parseTSV(content) {
-            const lines = content.trim().split('\n');
-            const headers = lines[0].split('\t').map(h => h.trim());
-            return lines.slice(1).map(line => {
-                const values = line.split('\t');
-                const row = {};
-                headers.forEach((h, i) => {
-                    row[h] = values[i] ? values[i].trim() : '';
-                });
-                return row;
-            });
-        }
-
-        const rrData = parseTSV(rawRR);
-        const arData = parseTSV(rawAR).map(row => ({
-            productA: row['A상품'],
-            productB: row['B상품'],
-            transactionCount: parseInt((row['두상품 구매 거래수'] || '0').replace(/,/g, '')),
-            confidence: parseFloat((row['신뢰도'] || '0').replace('%', '')),
-            lift: parseFloat(row['향상도'] || '0')
-        }));
-        const ctgData = parseTSV(rawCtg);
-
-        const categoryMap = {};
-        ctgData.forEach(c => {
-            categoryMap[c['구매상품']] = c['카테고리'];
+        // Initialize on Page Load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
         });
 
-        // --- Business Logic ---
-        // Removed Category Scenario Map
-        // New Scoring Logic: Score = (Lift * 10) + Confidence
-        // This roughly scales to 0-100 based on typical retail data ranges.
+        document.getElementById('rrFile').addEventListener('change', (e) => handleFile(e, 'rr'));
+        document.getElementById('arFile').addEventListener('change', (e) => handleFile(e, 'ar'));
 
-        function calculateRecScore(lift, confidence) {
-            return (lift * 10) + confidence;
-        }
+        function handleFile(e, type) {
+            const file = e.target.files[0];
+            if (!file) return;
 
-        function calculateRepurchaseScore(row) {
-            if (!row) return 0;
-            return (
-                0.1 * parseFloat(row['재구매율_30일'] || 0) +
-                0.2 * parseFloat(row['재구매율_60일'] || 0) +
-                0.3 * parseFloat(row['재구매율_90일'] || 0) +
-                0.4 * parseFloat(row['재구매율_180일'] || 0)
-            );
-        }
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: (results) => {
+                    const filtered = results.data.filter(r => {
+                        const name = (r['구매상품'] || r['A상품'] || r['B상품'] || "").toString();
+                        return !EXCLUDES.some(k => name.includes(k));
+                    });
 
-        // --- UI Operations ---
-        const searchInput = document.getElementById('searchInput');
-        const searchDropdown = document.getElementById('searchDropdown');
-        const resultsContainer = document.getElementById('resultsContainer');
-
-        function isValidRecommendation(productB) {
-            return !productB.includes("아르기닌") &&
-                !productB.includes("블랙마카") &&
-                !productB.includes("활력 부스터");
-        }
-
-        // Get Unique Anchors that have at least one valid recommendation
-        const validAnchors = new Set();
-        arData.forEach(r => {
-            if (isValidRecommendation(r.productB)) {
-                validAnchors.add(r.productA);
-            }
-        });
-        const anchorOptions = Array.from(validAnchors).sort();
-
-        // Setup Search
-        searchInput.addEventListener('input', (e) => {
-            const val = e.target.value.toLowerCase();
-            const filtered = anchorOptions.filter(opt => opt.toLowerCase().includes(val));
-            renderDropdown(filtered);
-        });
-
-        searchInput.addEventListener('focus', () => {
-            renderDropdown(anchorOptions);
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
-                searchDropdown.classList.remove('show');
-            }
-        });
-
-        function renderDropdown(options) {
-            searchDropdown.innerHTML = '';
-            if (options.length > 0) {
-                searchDropdown.classList.add('show');
-                options.forEach(opt => {
-                    const li = document.createElement('li');
-                    li.className = 'dropdown-item';
-                    li.textContent = opt;
-                    li.onclick = () => selectAnchor(opt);
-                    searchDropdown.appendChild(li);
-                });
-            } else {
-                searchDropdown.classList.remove('show');
-            }
-        }
-
-        function selectAnchor(anchor) {
-            searchInput.value = anchor;
-            searchDropdown.classList.remove('show');
-            renderResults(anchor);
-        }
-
-        // --- Repurchase Summary Logic ---
-        const summaryList = document.getElementById('summaryList');
-        const summaryTabBtns = document.querySelectorAll('.tab-btn');
-
-        function switchSummaryTab(days) {
-            summaryTabBtns.forEach(btn => {
-                if (btn.textContent.includes(days + '일')) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
+                    if (type === 'rr') {
+                        rawRR = filtered;
+                        document.getElementById('rrBox').classList.add('loaded');
+                    } else {
+                        rawAR = filtered;
+                        document.getElementById('arBox').classList.add('loaded');
+                    }
+                    if (rawRR.length > 0 && rawAR.length > 0) showAnalysis();
                 }
             });
-            renderRepurchaseSummary(days);
         }
 
-        function renderRepurchaseSummary(days) {
-            const key = `재구매율_${days}일`;
-            const sortedData = [...rrData]
-                .sort((a, b) => parseFloat(b[key] || 0) - parseFloat(a[key] || 0));
-
-            let html = '';
-            sortedData.forEach(item => {
-                const name = item['구매상품'];
-                html += `
-                    <div class="summary-item" onclick="selectStrategyTarget('${name}', this)">
-                        <span class="item-name" title="${name}">${name}</span>
-                        <span class="item-value">${item[key]}%</span>
-                    </div>
-                `;
-            });
-            summaryList.innerHTML = html;
-        }
-
-        function selectStrategyTarget(targetName, element) {
-            // UI Feedback
-            document.querySelectorAll('.summary-item').forEach(el => el.classList.remove('selected'));
-            element.classList.add('selected');
-
-            analyzeReverseSampling(targetName);
-        }
-
-        function analyzeReverseSampling(targetName) {
-            const strategySection = document.getElementById('strategySection');
-            const strategySubtitle = document.getElementById('strategySubtitle');
-            const strategyGrid = document.getElementById('strategyGrid');
-
-            // 1. Logic: Target(Product B)을 주는게 효과적인 Anchor(Product A) 찾기
-            let candidates = arData
-                .filter(r => r.productB === targetName)
-                .map(r => ({
-                    ...r,
-                    score: calculateRecScore(r.lift, r.confidence)
-                }))
-                .sort((a, b) => b.score - a.score);
-
-            // 2. Render
-            strategySubtitle.innerHTML = `<strong>'${targetName}'</strong> 제품을 샘플로 증정했을 때, 실구매로 이어질 확률이 가장 높은 선행 구매 제품(앵커) 리스트입니다.`;
-
-            let html = '';
-            const top3 = candidates.slice(0, 3);
-
-            if (top3.length === 0) {
-                html = `<p class="no-data" style="grid-column: 1/-1;">데이터 분석 결과, '${targetName}'을(를) 샘플로 주기에 적합한 선행 구매 데이터가 부족합니다.</p>`;
-            } else {
-                top3.forEach((item, index) => {
-                    html += `
-                        <div class="strategy-card">
-                            <span class="strategy-rank">STRATEGY TOP ${index + 1}</span>
-                            <div class="strategy-product-name">${item.productA}</div>
-                            <div style="margin-bottom: 12px;">
-                                <span class="strategy-score-label">샘플링 전략 지수</span>
-                                <span class="strategy-score-val">${item.score.toFixed(1)}</span>
-                            </div>
-                            <div class="strategy-reason">
-                                💡 <strong>분석 결과:</strong> '${item.productA}' 구매 고객은 '${item.productB}'에 대해 타 고객 대비 <strong>${item.lift.toFixed(1)}배</strong> 높은 관심을 보입니다. <br>
-                                해당 제품 배송 시 '${item.productB}' 샘플을 동봉하면 본품 전환율이 가장 높을 것으로 예측됩니다.
-                            </div>
-                        </div>
-                    `;
-                });
+        /**
+         * Storage Management
+         */
+        function saveToStorage() {
+            if (rawRR.length === 0 || rawAR.length === 0) {
+                alert('먼저 데이터를 업로드해 주세요.');
+                return;
             }
 
-            strategyGrid.innerHTML = html;
-            strategySection.classList.add('visible');
+            try {
+                const now = new Date().toLocaleString('ko-KR');
+                localStorage.setItem('extreme_rr_data', JSON.stringify(rawRR));
+                localStorage.setItem('extreme_ar_data', JSON.stringify(rawAR));
+                localStorage.setItem('extreme_last_updated', now);
 
-            // Scroll to section
-            strategySection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                updateStatusUI(`마지막 저장: ${now}`);
+                updateUIState(true);
+                alert('데이터가 브라우저에 성공적으로 저장되었습니다.');
+            } catch (e) {
+                alert('데이터 저장 실패: 브라우저 저장소 한계를 초과했을 수 있습니다.');
+            }
         }
 
-        // Initialize Summary
-        renderRepurchaseSummary(60);
+        function updateUIState(hasData) {
+            const controlPanel = document.getElementById('controlPanel');
+            const headerDeleteBtn = document.getElementById('headerDeleteBtn');
 
-        function renderResults(anchorName) {
-            // 1. Logic
-            // Filter (Exclude Arginine and Black Maca as targets)
-            let candidates = arData.filter(r =>
-                r.productA === anchorName &&
-                isValidRecommendation(r.productB)
-            );
+            if (hasData) {
+                controlPanel.style.display = 'none';
+                headerDeleteBtn.style.display = 'flex';
+            } else {
+                controlPanel.style.display = 'grid';
+                headerDeleteBtn.style.display = 'none';
+            }
+        }
 
-            // Calculate Score for each
-            candidates.forEach(c => {
-                c.score = calculateRecScore(c.lift, c.confidence);
+        function loadFromStorage() {
+            const savedRR = localStorage.getItem('extreme_rr_data');
+            const savedAR = localStorage.getItem('extreme_ar_data');
+            const lastUpdated = localStorage.getItem('extreme_last_updated');
+
+            if (savedRR && savedAR) {
+                rawRR = JSON.parse(savedRR);
+                rawAR = JSON.parse(savedAR);
+
+                document.getElementById('rrBox').classList.add('loaded');
+                document.getElementById('arBox').classList.add('loaded');
+
+                updateStatusUI(`저장된 데이터 로드됨 (${lastUpdated})`);
+                updateUIState(true);
+                showAnalysis();
+            }
+        }
+
+        function clearStorage() {
+            if (!confirm('정말로 저장된 모든 데이터를 삭제하시겠습니까?')) return;
+
+            localStorage.removeItem('extreme_rr_data');
+            localStorage.removeItem('extreme_ar_data');
+            const now = new Date().toLocaleString('ko-KR');
+            localStorage.setItem('extreme_last_updated', now + ' (삭제됨)');
+
+            rawRR = [];
+            rawAR = [];
+
+            document.getElementById('rrBox').classList.remove('loaded');
+            document.getElementById('arBox').classList.remove('loaded');
+            document.getElementById('analysisArea').style.display = 'none';
+
+            updateStatusUI(`삭제 시각: ${now}`);
+            updateUIState(false);
+            alert('데이터가 삭제되었습니다.');
+        }
+
+        function updateStatusUI(msg) {
+            document.getElementById('storageStatus').textContent = msg;
+        }
+
+        function showAnalysis() {
+            document.getElementById('analysisArea').style.display = 'block';
+            renderTopProducts();
+        }
+
+        window.switchPeriod = function (period) {
+            currentPeriod = period;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                if (btn.textContent === period) btn.classList.add('active');
+                else btn.classList.remove('active');
             });
+            document.getElementById('currentPeriodLabel').textContent = `기준: ${period} 재구매율`;
+            renderTopProducts();
+        };
 
-            // Sort by Score Descending
-            candidates.sort((a, b) => b.score - a.score);
+        function renderTopProducts() {
+            if (rawRR.length === 0) return;
+            const grid = document.getElementById('productGrid');
+            const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+            const key = `재구매율_${currentPeriod}`;
 
-            const top3 = candidates.slice(0, 3);
+            const filtered = rawRR.filter(p => p['구매상품'].toLowerCase().includes(searchTerm));
+            const sorted = filtered.sort((a, b) => {
+                const valA = parseFloat(a[key] || 0);
+                const valB = parseFloat(b[key] || 0);
+                return valB - valA;
+            }).slice(0, 50);
 
-            // Anchor Score
-            const anchorRR = rrData.find(r => r['구매상품'] === anchorName);
-            const score = calculateRepurchaseScore(anchorRR);
+            if (sorted.length === 0) {
+                grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-sub); padding: 40px;">검색 결과가 없습니다.</p>`;
+                return;
+            }
 
-            // 2. Render
-            let html = `
-            <div class="anchor-info">
-                <h2>선택된 앵커: <span class="highlight">${anchorName}</span></h2>
-                <div class="score-badge">
-                    재구매 가중 점수: <strong>${score.toFixed(2)}점</strong>
-                </div>
+            grid.innerHTML = sorted.map((p, i) => `
+            <div class="product-item" onclick="selectTarget('${p['구매상품']}')">
+                <span class="rank">${i + 1}위</span>
+                <span class="name">${p['구매상품']}</span>
+                <span class="rate">${p[key] || 0}%</span>
             </div>
-            <div class="cards-grid">
-        `;
-
-            if (top3.length === 0) {
-                html += `<p class="no-data">추천 결과가 없습니다. (데이터 부족)</p>`;
-            } else {
-                top3.forEach((item, index) => {
-                    const catB = categoryMap[item.productB] || '기타';
-                    const message = `[맞춤 추천] 고객님, '${anchorName}'과(와) 가장 궁합이 좋은 상품입니다.\n데이터 분석 점수 ${item.score.toFixed(0)}점을 기록한 ${item.productB} 샘플을 드립니다. \n마음에 드셨다면, 아래 특별 혜택을 놓치지 마세요.`;
-
-                    html += `
-                <div class="card">
-                    <div class="card-header">
-                        <span class="rank-badge">TOP ${index + 1}</span>
-                        <h3 class="product-name">${item.productB}</h3>
-                        <span class="category-name">${catB}</span>
-                    </div>
-
-                    <div style="margin-bottom: 12px;">
-                        <span style="font-size: 12px; color: #888;">추천 적합도 Score</span>
-                        <span class="score-value">${item.score.toFixed(1)}</span>
-                        <div class="score-bar-bg">
-                            <div class="score-bar-fill" style="width: ${Math.min(item.score, 100)}%;"></div>
-                        </div>
-                    </div>
-
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <label>함께 구매 (Lift)</label>
-                            <span>${item.lift.toFixed(2)}배</span>
-                        </div>
-                        <div class="stat-item">
-                            <label>동반 확률 (Conf.)</label>
-                            <span>${item.confidence}%</span>
-                        </div>
-                        <div class="stat-item">
-                            <label>거래수 (Tx)</label>
-                            <span>${item.transactionCount.toLocaleString()}건</span>
-                        </div>
-                    </div>
-
-                    <div class="message-box">
-                        <div class="message-header">
-                            <span>감사카드 문구</span>
-                            <button class="copy-btn" onclick="copyToClipboard(this, \`${message.replace(/\n/g, '\\n')}\`)">문구 복사 📋</button>
-                        </div>
-                        <pre class="message-text">${message}</pre>
-                        <div class="coupon">[쿠폰 혜택] 샘플 제품 본품 구매 전용 10% 할인</div>
-                    </div>
-                </div>
-                `;
-                });
-            }
-
-            html += `</div>`;
-            resultsContainer.innerHTML = html;
-            resultsContainer.classList.add('visible');
+        `).join('');
         }
 
-        window.copyToClipboard = function (btn, text) {
-            navigator.clipboard.writeText(text).then(() => {
-                const original = btn.textContent;
-                btn.textContent = "복사됨 ✅";
-                setTimeout(() => {
-                    btn.textContent = original;
-                }, 2000);
+        window.selectTarget = function (name) {
+            document.getElementById('listSection').style.display = 'none';
+            document.getElementById('focusBanner').style.display = 'flex';
+            document.getElementById('targetNameDisplay').textContent = name;
+            document.getElementById('anchorSection').style.display = 'block';
+            analyzeAnchors(name);
+        };
+
+        window.resetSelection = function () {
+            document.getElementById('listSection').style.display = 'block';
+            document.getElementById('focusBanner').style.display = 'none';
+            document.getElementById('anchorSection').style.display = 'none';
+        };
+
+        function analyzeAnchors(targetName) {
+            const grid = document.getElementById('anchorGrid');
+            const allCandidates = rawAR.filter(r => r['B상품'] === targetName);
+            const matches = allCandidates.filter(m => {
+                const tx = parseInt((m['두상품 구매 거래수'] || '0').replace(/,/g, ''));
+                return tx >= MIN_TX_COUNT;
             });
+
+            if (matches.length > 0) {
+                const metrics = matches.map(m => ({
+                    lift: parseFloat(m['향상도'] || 0),
+                    conf: parseFloat((m['신뢰도'] || '0').replace('%', '')),
+                    tx: parseInt((m['두상품 구매 거래수'] || '0').replace(/,/g, ''))
+                }));
+
+                const maxLift = Math.max(...metrics.map(d => d.lift), 1);
+                const minLift = Math.min(...metrics.map(d => d.lift));
+                const maxConf = Math.max(...metrics.map(d => d.conf), 1);
+                const minConf = Math.min(...metrics.map(d => d.conf));
+                const maxTx = Math.max(...metrics.map(d => d.tx), 1);
+                const minTx = Math.min(...metrics.map(d => d.tx));
+
+                matches.forEach(m => {
+                    const lift = parseFloat(m['향상도'] || 0);
+                    const conf = parseFloat((m['신뢰도'] || '0').replace('%', ''));
+                    const tx = parseInt((m['두상품 구매 거래수'] || '0').replace(/,/g, ''));
+
+                    const nLift = (maxLift === minLift) ? 1 : (lift - minLift) / (maxLift - minLift);
+                    const nConf = (maxConf === minConf) ? 1 : (conf - minConf) / (maxConf - minConf);
+                    const nTx = (maxTx === minTx) ? 1 : (tx - minTx) / (maxTx - minTx);
+
+                    m._score = (nLift * 50) + (nTx * 30) + (nConf * 20);
+                });
+
+                matches.sort((a, b) => b._score - a._score);
+            }
+
+            const top3 = matches.slice(0, 3);
+
+            if (top3.length === 0) {
+                let reason = allCandidates.length === 0
+                    ? `연관구매 데이터 내에 <b>'${targetName}'</b>을(를) 타겟으로 하는 선행 구매 이력이 존재하지 않습니다.`
+                    : `앵커 제품 후보군이 존재하지만, 모두 거래수 ${MIN_TX_COUNT}건 미만으로 필터링되었습니다.`;
+
+                grid.innerHTML = `
+                <div class="anchor-card" style="grid-template-columns: 1fr;">
+                    <div class="report-box"><div class="report-title">⚠️ 데이터 분석 제외 사유</div><div class="report-text error">${reason}</div></div>
+                </div>`;
+                return;
+            }
+
+            grid.innerHTML = top3.map((m, i) => {
+                const lift = parseFloat(m['향상도'] || 0);
+                const conf = m['신뢰도'];
+                const tx = m['두상품 구매 거래수'] || '0';
+                const anchor = m['A상품'];
+
+                let tacticalAdvice = `<b>'${anchor}'</b>는 '${targetName}'을 구매하기 전 가장 강력한 모멘텀을 형성하는 제품입니다. `;
+                tacticalAdvice += `단순히 확률이 높을 뿐만 아니라, <b>${tx}건</b>이라는 방대한 거래 데이터가 이 상관계를 뒷받침하고 있어 전략 적용 시 실패 확률이 매우 낮습니다. `;
+                tacticalAdvice += `<br><br><b>분석 요약:</b> 이 앵커 제품 구매자는 일반인 대비 <b>${lift.toFixed(1)}배</b> 높은 반응을 보이며, 실제 100명 중 <b>${conf}명</b>이 최종 구매로 이어지는 안정적인 패턴을 보입니다.`;
+
+                return `
+                <div class="anchor-card">
+                    <div class="anchor-prefix">
+                        <span class="rank-tag">RANK ${i + 1}</span>
+                        <h4 class="anchor-name">${anchor}</h4>
+                        <div class="metrics-inline">
+                            <div class="m-item"><label>영향도(Lift)</label><span>${lift.toFixed(2)}배</span></div>
+                            <div class="m-item"><label>신뢰도(Conf)</label><span>${conf}</span></div>
+                            <div class="m-item"><label>거래수(Tx)</label><span>${tx}</span></div>
+                        </div>
+                    </div>
+                    <div class="report-box">
+                        <div class="report-title">📊 TF 인사이트 리포트</div>
+                        <div class="report-text">${tacticalAdvice}</div>
+                    </div>
+                </div>
+            `;
+            }).join('');
         }
     </script>
 
-    <style>
-        body {
-            overflow-x: hidden;
-        }
-    </style>
 </body>
 
 </html>
